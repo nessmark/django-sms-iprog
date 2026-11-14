@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Compose SMS | Django TxtLink Gateway{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: SMS Composition Form -->
+    <div class="col-lg-7">
+        <div class="card card-custom p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <h4 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-chat-left-text-fill text-primary me-2"></i>Send SMS Message
+                </h4>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+                    TxtLink Provider
+                </span>
+            </div>
+
+            <form method="POST" action="{% url 'sms_app:compose' %}" id="smsForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Recipient Contact Quick Picker -->
+                {% if contacts_list %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-secondary small">
+                        <i class="bi bi-people-fill me-1"></i>Select from Saved Contacts (Optional)
+                    </label>
+                    <select class="form-select form-select-sm" id="quickContactSelect">
+                        <option value="">-- Choose a contact to auto-fill --</option>
+                        {% for contact in contacts_list %}
+                            <option value="{{ contact.phone_number }}" data-name="{{ contact.name }}">
+                                {{ contact.name }} ({{ contact.phone_number }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Recipient Phone Number Field -->
+                <div class="mb-3">
+                    <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-bold">
+                        Recipient Phone Number <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary">
+                            <i class="bi bi-telephone-fill"></i>
+                        </span>
+                        {{ form.phone_number }}
+                    </div>
+                    {% if form.phone_number.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.phone_number.errors %}
+                                <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="form-text small text-muted">
+                            Accepts E.164 (e.g. <code>+639171234567</code>, <code>+15551234567</code>) or Philippine mobile (e.g. <code>09171234567</code>).
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Message Templates -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label fw-semibold text-secondary small mb-0">
+                            <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Quick Message Templates
+                        </label>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                                data-text="Hello! This is an official notification regarding IT 120 course updates. Please check your student portal.">
+                            Course Notice
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                                data-text="Your verification code is 482910. Valid for 10 minutes. Do not share this code with anyone.">
+                            OTP Code
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                                data-text="Friendly reminder: Group Assignment submission is due soon. Please review your code and documentation.">
+                            Assignment Reminder
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                                data-text="Test message from Django application integrated with TxtLink SMS API gateway.">
+                            API Test
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Message Input Field -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="{{ form.message.id_for_label }}" class="form-label fw-bold mb-0">
+                            Message Content <span class="text-danger">*</span>
+                        </label>
+                        <!-- Live Character & Segment Counters -->
+                        <div class="small fw-semibold" id="counterBox">
+                            <span id="charCount" class="text-primary">0</span> / 160 characters
+                            <span class="badge bg-secondary-subtle text-secondary border ms-1" id="segmentBadge">1 segment</span>
+                        </div>
+                    </div>
+                    {{ form.message }}
+                    {% if form.message.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.message.errors %}
+                                <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="form-text small text-muted">
+                            Standard single SMS contains up to 160 characters (GSM-7). Longer messages will be sent as concatenated multi-part SMS.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm" id="submitBtn">
+                        <i class="bi bi-send-fill me-2"></i>Send SMS via TxtLink
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Provider Note and Architecture Banner -->
+        <div class="card card-custom p-3 mt-3 bg-light border-0">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-info-circle-fill text-primary fs-4 mt-1"></i>
+                <div class="small text-secondary">
+                    <strong>Submission vs Delivery Status Architecture:</strong>
+                    When an SMS request is dispatched, TxtLink validates the payload and queues it for cellular routing (<code>Status: SUBMITTED</code>).
+                    Delivery to the recipient handset depends on cellular reception, network carrier routing, and recipient device availability.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Interactive Phone Preview & Gateway Status -->
+    <div class="col-lg-5">
+        <!-- Smartphone Live Preview Mockup -->
+        <div class="card card-custom p-3 mb-4 text-center">
+            <h6 class="fw-bold text-secondary mb-3">
+                <i class="bi bi-phone me-1"></i>Interactive Recipient Handset Preview
+            </h6>
+            
+            <div class="phone-preview-mockup">
+                <div class="phone-screen text-start">
+                    <!-- Top Phone Header -->
+                    <div>
+                        <div class="d-flex justify-content-between text-muted small border-bottom pb-2 mb-2" style="font-size: 0.7rem;">
+                            <span id="previewTime">12:00</span>
+                            <div>
+                                <i class="bi bi-reception-4 me-1"></i>
+                                <i class="bi bi-wifi me-1"></i>
+                                <i class="bi bi-battery-full"></i>
+                            </div>
+                        </div>
+                        <div class="text-center border-bottom pb-2">
+                            <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center mb-1" style="width: 38px; height: 38px;">
+                                <i class="bi bi-person-fill fs-5"></i>
+                            </div>
+                            <div class="fw-bold small text-truncate" id="previewRecipient">Recipient Phone</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">SMS Text Message</div>
+                        </div>
+                    </div>
+
+                    <!-- Message Bubble Area -->
+                    <div class="my-3 d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+                        <div class="bubble-sent" id="previewBubble">
+                            Your message preview will appear here in real time...
+                        </div>
+                    </div>
+
+                    <!-- Bottom Input Mockup -->
+                    <div class="bg-white rounded-pill p-2 d-flex align-items-center justify-content-between shadow-sm border" style="font-size: 0.75rem;">
+                        <span class="text-muted ps-2">iMessage / SMS</span>
+                        <div class="btn btn-primary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                            <i class="bi bi-arrow-up text-white" style="font-size: 0.75rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <small class="text-muted mt-2">Updates dynamically as you type</small>
+        </div>
+
+        <!-- Recent SMS Dispatches Quick Card -->
+        <div class="card card-custom p-3">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <h6 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-clock-history me-1 text-primary"></i>Recent Dispatches
+                </h6>
+                <a href="{% url 'sms_app:history' %}" class="small text-decoration-none">View All</a>
+            </div>
+
+            {% if recent_messages %}
+                <div class="list-group list-group-flush">
+                    {% for msg in recent_messages %}
+                        <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-semibold small">{{ msg.phone_number }}</span>
+                                <span class="badge {{ msg.status_badge_class }} rounded-pill" style="font-size: 0.68rem;">
+                                    {{ msg.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="mb-1 text-muted small text-truncate" style="max-width: 280px;">
+                                {{ msg.message }}
+                            </p>
+                            <small class="text-secondary" style="font-size: 0.7rem;">
+                                {{ msg.created_at|date:"M d, Y h:i A" }}
+                            </small>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0 text-center py-3">No messages sent yet. Use the form to send your first SMS!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const phoneInput = document.getElementById('id_phone_number');
+    const messageInput = document.getElementById('id_message');
+    const contactSelect = document.getElementById('quickContactSelect');
+    const templateButtons = document.querySelectorAll('.template-btn');
+
+    const charCountEl = document.getElementById('charCount');
+    const segmentBadgeEl = document.getElementById('segmentBadge');
+    const previewRecipient = document.getElementById('previewRecipient');
+    const previewBubble = document.getElementById('previewBubble');
+    const previewTime = document.getElementById('previewTime');
+
+    // Update real clock on preview
+    const now = new Date();
+    previewTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Contact Quick Picker
+    if (contactSelect) {
+        contactSelect.addEventListener('change', function () {
+            if (this.value) {
+                phoneInput.value = this.value;
+                updatePreview();
+            }
+        });
+    }
+
+    // Template Quick Fill
+    templateButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            messageInput.value = this.getAttribute('data-text');
+            updatePreview();
+            messageInput.focus();
+        });
+    });
+
+    // Realtime character and segment counter
+    function updatePreview() {
+        const phone = phoneInput.value.trim();
+        const text = messageInput.value;
+        const charCount = text.length;
+
+        // Recipient preview
+        previewRecipient.textContent = phone ? phone : "Recipient Phone";
+
+        // Message bubble preview
+        if (text.trim().length > 0) {
+            previewBubble.textContent = text;
+        } else {
+            previewBubble.textContent = "Your message preview will appear here in real time...";
+        }
+
+        // Live calculation of SMS segments
+        let segments = 1;
+        let isUnicode = /[^\u0000-\u007f]/.test(text);
+
+        if (!isUnicode) {
+            if (charCount <= 160) {
+                segments = 1;
+            } else {
+                segments = Math.ceil(charCount / 153);
+            }
+        } else {
+            if (charCount <= 70) {
+                segments = 1;
+            } else {
+                segments = Math.ceil(charCount / 67);
+            }
+        }
+
+        charCountEl.textContent = charCount;
+        segmentBadgeEl.textContent = `${segments} segment${segments > 1 ? 's' : ''}${isUnicode ? ' (Unicode)' : ''}`;
+
+        if (charCount > 160) {
+            charCountEl.classList.add('text-warning');
+        } else {
+            charCountEl.classList.remove('text-warning');
+        }
+    }
+
+    phoneInput.addEventListener('input', updatePreview);
+    messageInput.addEventListener('input', updatePreview);
+
+    // Initial trigger
+    updatePreview();
+});
+</script>
+{% endblock %}

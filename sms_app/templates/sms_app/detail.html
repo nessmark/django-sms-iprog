@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}SMS Transmission Details #{{ message_item.pk }} | Django TxtLink Gateway{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card card-custom p-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1 text-dark">
+                        <i class="bi bi-file-earmark-text-fill text-primary me-2"></i>SMS Transmission Details
+                    </h4>
+                    <span class="text-muted small">Record #{{ message_item.pk }} &bull; Logged on {{ message_item.created_at|date:"F d, Y h:i:s A" }}</span>
+                </div>
+                <div>
+                    <a href="{% url 'sms_app:history' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to History
+                    </a>
+                </div>
+            </div>
+
+            <!-- Status and Meta Summary -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted d-block mb-1">Gateway Status</small>
+                        <span class="badge {{ message_item.status_badge_class }} fs-6 px-3 py-2">
+                            {{ message_item.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted d-block mb-1">Recipient Number</small>
+                        <span class="fw-bold fs-6 text-dark">{{ message_item.phone_number }}</span>
+                        {% if message_item.recipient_contact %}
+                            <small class="text-secondary d-block">({{ message_item.recipient_contact.name }})</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted d-block mb-1">Gateway Reference ID</small>
+                        <span class="font-monospace text-primary fw-bold">
+                            {{ message_item.gateway_message_id|default:"None / N/A" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Body -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark">Message Content</label>
+                <div class="p-3 bg-light rounded-3 border font-monospace text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">{{ message_item.message }}</div>
+                <div class="d-flex gap-3 mt-2 text-muted small">
+                    <span><i class="bi bi-card-text me-1"></i>Characters: <strong>{{ message_item.character_count }}</strong></span>
+                    <span><i class="bi bi-layers me-1"></i>SMS Segments: <strong>{{ message_item.segment_count }}</strong></span>
+                    <span><i class="bi bi-shield-check me-1"></i>Mode: <strong>{% if message_item.is_simulation %}Simulation / Sandbox{% else %}Live TxtLink API{% endif %}</strong></span>
+                </div>
+            </div>
+
+            <!-- Submission vs Delivery Note -->
+            <div class="alert alert-info border-0 shadow-sm mb-4">
+                <h6 class="alert-heading fw-bold mb-1">
+                    <i class="bi bi-info-circle-fill me-1"></i>Gateway Submission vs Delivery Status
+                </h6>
+                <p class="mb-0 small">
+                    {{ message_item.status_detail|default:"Message submitted through TxtLink REST API. Handset delivery is asynchronous and confirmed when cellular carrier handoff succeeds." }}
+                </p>
+            </div>
+
+            <!-- Error message if any -->
+            {% if message_item.error_message %}
+            <div class="alert alert-danger border-0 shadow-sm mb-4">
+                <h6 class="alert-heading fw-bold mb-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Reported Error Detail
+                </h6>
+                <p class="mb-0 small font-monospace">{{ message_item.error_message }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Raw Provider Response JSON Payload -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark">
+                    <i class="bi bi-code-slash text-secondary me-1"></i>TxtLink Gateway Raw Response Payload
+                </label>
+                <div class="bg-dark text-light p-3 rounded-3 font-monospace small" style="max-height: 250px; overflow-y: auto;">
+                    <pre class="text-light mb-0">{{ message_item.gateway_response|default:"{}" }}</pre>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                <a href="{% url 'sms_app:compose' %}?to={{ message_item.phone_number }}&text={{ message_item.message|urlencode }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-reply-fill me-1"></i> Resend This Message
+                </a>
+                <a href="{% url 'sms_app:history' %}" class="btn btn-secondary btn-sm">
+                    Back to History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
