@@ -116,8 +116,8 @@ Follow these step-by-step instructions to set up the project on any macOS, Linux
 
 #### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/nessmark/django-sms-txtlink.git
-cd django-sms-txtlink
+git clone https://github.com/nessmark/django-sms-iprog.git
+cd django-sms-iprog
 ```
 
 #### Step 2: Create and Activate a Virtual Environment
@@ -329,7 +329,7 @@ We are submitting our group assignment, Build a Django Application for Sending S
 Group Members:
 1. Nesmark Villocino (All roles: Architecture, Frontend/Validation, Provider Integration/Testing)
 
-GitHub Repository: https://github.com/nessmark/django-sms-txtlink
+GitHub Repository: https://github.com/nessmark/django-sms-iprog
 Demonstration Video: [Insert your accessible video drive/YouTube link here]
 
 Thank you.
