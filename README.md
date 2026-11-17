@@ -16,7 +16,6 @@
 10. [Submission vs Delivery Status Handling](#10-submission-vs-delivery-status-handling)
 11. [Known Limitations & Future Roadmap](#11-known-limitations--future-roadmap)
 12. [Demonstration Video Guide & Recording Checklist](#12-demonstration-video-guide--recording-checklist)
-13. [Submission Email Reference](#13-submission-email-reference)
 
 ---
 
@@ -315,25 +314,3 @@ When recording the **3 to 10-minute demonstration video**, follow this structure
    - Conclude the presentation.
 
 ---
-
-### 13. Submission Email Reference
-
-- **To:** `joshuatubo4@gmail.com`
-- **Subject:** `Assignment_IT 120-1stSemSY26-27`
-
-```text
-Dear Instructor,
-
-We are submitting our group assignment, Build a Django Application for Sending SMS.
-
-Group Members:
-1. Nesmark Villocino (All roles: Architecture, Frontend/Validation, Provider Integration/Testing)
-
-GitHub Repository: https://github.com/nessmark/django-sms-iprog
-Demonstration Video: [Insert your accessible video drive/YouTube link here]
-
-Thank you.
-
-Respectfully,
-Nesmark Villocino
-```
