@@ -312,5 +312,3 @@ When recording the **3 to 10-minute demonstration video**, follow this structure
    - Show `settings.py` and explain how `IPROG_API_TOKEN` is securely read from `.env` and excluded from `.gitignore`.
    - Run `python manage.py test` in the terminal to demonstrate all 33 automated tests passing cleanly.
    - Conclude the presentation.
-
----
