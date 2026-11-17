@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}SMS Transmission Details #{{ message_item.pk }} | Django TxtLink Gateway{% endblock %}
+{% block title %}SMS Transmission Details #{{ message_item.pk }} | Django IPROG SMS Gateway{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -57,7 +57,7 @@
                 <div class="d-flex gap-3 mt-2 text-muted small">
                     <span><i class="bi bi-card-text me-1"></i>Characters: <strong>{{ message_item.character_count }}</strong></span>
                     <span><i class="bi bi-layers me-1"></i>SMS Segments: <strong>{{ message_item.segment_count }}</strong></span>
-                    <span><i class="bi bi-shield-check me-1"></i>Mode: <strong>{% if message_item.is_simulation %}Simulation / Sandbox{% else %}Live TxtLink API{% endif %}</strong></span>
+                    <span><i class="bi bi-shield-check me-1"></i>Mode: <strong>{% if message_item.is_simulation %}Simulation / Sandbox{% else %}Live IPROG SMS API{% endif %}</strong></span>
                 </div>
             </div>
 
@@ -67,7 +67,7 @@
                     <i class="bi bi-info-circle-fill me-1"></i>Gateway Submission vs Delivery Status
                 </h6>
                 <p class="mb-0 small">
-                    {{ message_item.status_detail|default:"Message submitted through TxtLink REST API. Handset delivery is asynchronous and confirmed when cellular carrier handoff succeeds." }}
+                    {{ message_item.status_detail|default:"Message submitted through the IPROG SMS REST API. Handset delivery is asynchronous and confirmed when cellular carrier handoff succeeds." }}
                 </p>
             </div>
 
@@ -84,7 +84,7 @@
             <!-- Raw Provider Response JSON Payload -->
             <div class="mb-4">
                 <label class="form-label fw-bold text-dark">
-                    <i class="bi bi-code-slash text-secondary me-1"></i>TxtLink Gateway Raw Response Payload
+                    <i class="bi bi-code-slash text-secondary me-1"></i>IPROG SMS Gateway Raw Response Payload
                 </label>
                 <div class="bg-dark text-light p-3 rounded-3 font-monospace small" style="max-height: 250px; overflow-y: auto;">
                     <pre class="text-light mb-0">{{ message_item.gateway_response|default:"{}" }}</pre>
@@ -93,6 +93,14 @@
 
             <!-- Action buttons -->
             <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                {% if not message_item.is_simulation and message_item.gateway_message_id %}
+                <form method="POST" action="{% url 'sms_app:check_status' message_item.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-repeat me-1"></i> Check Delivery Status
+                    </button>
+                </form>
+                {% endif %}
                 <a href="{% url 'sms_app:compose' %}?to={{ message_item.phone_number }}&text={{ message_item.message|urlencode }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-reply-fill me-1"></i> Resend This Message
                 </a>

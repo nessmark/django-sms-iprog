@@ -57,7 +57,7 @@ class SMSMessage(models.Model):
         max_length=100,
         blank=True,
         null=True,
-        help_text="Message ID returned by TxtLink"
+        help_text="Message ID returned by the SMS provider"
     )
     gateway_response = models.TextField(
         blank=True,

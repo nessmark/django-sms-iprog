@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Compose SMS | Django TxtLink Gateway{% endblock %}
+{% block title %}Compose SMS | Django IPROG SMS Gateway{% endblock %}
 
 {% block content %}
 <div class="row g-4">
@@ -12,7 +12,7 @@
                     <i class="bi bi-chat-left-text-fill text-primary me-2"></i>Send SMS Message
                 </h4>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
-                    TxtLink Provider
+                    IPROG SMS Provider
                 </span>
             </div>
 
@@ -81,7 +81,7 @@
                             Assignment Reminder
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
-                                data-text="Test message from Django application integrated with TxtLink SMS API gateway.">
+                                data-text="Test message from Django application integrated with the IPROG SMS API gateway.">
                             API Test
                         </button>
                     </div>
@@ -116,7 +116,7 @@
                 <!-- Submit Button -->
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm" id="submitBtn">
-                        <i class="bi bi-send-fill me-2"></i>Send SMS via TxtLink
+                        <i class="bi bi-send-fill me-2"></i>Send SMS via IPROG SMS
                     </button>
                 </div>
             </form>
@@ -128,7 +128,7 @@
                 <i class="bi bi-info-circle-fill text-primary fs-4 mt-1"></i>
                 <div class="small text-secondary">
                     <strong>Submission vs Delivery Status Architecture:</strong>
-                    When an SMS request is dispatched, TxtLink validates the payload and queues it for cellular routing (<code>Status: SUBMITTED</code>).
+                    When an SMS request is dispatched, IPROG SMS validates the payload and queues it for cellular routing (<code>Status: SUBMITTED</code>).
                     Delivery to the recipient handset depends on cellular reception, network carrier routing, and recipient device availability.
                 </div>
             </div>

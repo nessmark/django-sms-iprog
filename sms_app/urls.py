@@ -10,6 +10,7 @@ urlpatterns = [
     # SMS history and details
     path('history/', views.history_list, name='history'),
     path('history/<int:pk>/', views.message_detail, name='detail'),
+    path('history/<int:pk>/status/', views.check_delivery_status, name='check_status'),
     path('history/clear/', views.clear_history, name='clear_history'),
 
     # Dashboard and analytics

@@ -2,7 +2,7 @@
 Django settings for sms_project project.
 
 Built for IT 120 - Integrative Programming and Technologies
-Assignment: Build a Django Application for Sending SMS using TxtLink API Gateway.
+Assignment: Build a Django Application for Sending SMS using the IPROG SMS API.
 """
 
 import os
@@ -141,14 +141,33 @@ MESSAGE_TAGS = {
 }
 
 # ===================================================================
-# TxtLink (TextLink) SMS Provider Configuration
+# IPROG SMS Provider Configuration (ACTIVE PROVIDER)
 # ===================================================================
-# Base endpoint for TextLink REST API
-TXTLINK_API_URL = os.getenv('TXTLINK_API_URL', 'https://textlinksms.com/api/send-sms')
+# Philippine SMS gateway: https://www.iprogsms.com
+# Student accounts get 5 free SMS credits after verification.
+# Create an account, verify as Student, then copy the token from API Settings.
+# Leave IPROG_API_TOKEN empty to run in simulation mode.
+IPROG_API_URL = os.getenv(
+    'IPROG_API_URL',
+    'https://www.iprogsms.com/api/v1/sms_messages'
+)
+IPROG_API_TOKEN = os.getenv('IPROG_API_TOKEN', '')
+IPROG_STATUS_URL = os.getenv(
+    'IPROG_STATUS_URL',
+    'https://www.iprogsms.com/api/v1/sms_messages/status'
+)
 
-# API Key obtained from https://textlinksms.com
-TXTLINK_API_KEY = os.getenv('TXTLINK_API_KEY', '')
+# ===================================================================
+# Textbelt SMS Provider Configuration (LEGACY / FALLBACK REFERENCE)
+# ===================================================================
+# Philippine carriers commonly block unregistered foreign senders, so Textbelt
+# is no longer the active provider. Kept here so the legacy service still runs.
+TEXTBELT_API_URL = os.getenv('TEXTBELT_API_URL', 'https://textbelt.com/text')
+TEXTBELT_API_KEY = os.getenv('TEXTBELT_API_KEY', 'textbelt')
 
-# Simulation Mode: if True, will mock successful API response for demonstration/grading
-# when no active paid SMS credits are available.
-TXTLINK_SIMULATION_MODE = os.getenv('TXTLINK_SIMULATION_MODE', 'False').lower() in ('true', '1', 't')
+# Delivery-status lookup endpoint (append /<textId>)
+TEXTBELT_STATUS_URL = os.getenv('TEXTBELT_STATUS_URL', 'https://textbelt.com/status')
+
+# Simulation toggle. When True, NO real SMS is sent and a mocked successful
+# response is returned (safe for demos/tests). Set to False to send for real.
+SMS_SIMULATION_MODE = os.getenv('SMS_SIMULATION_MODE', 'False').lower() in ('true', '1', 't')

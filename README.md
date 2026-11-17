@@ -1,5 +1,5 @@
 # IT 120 – Integrative Programming and Technologies
-## Group Laboratory/Assignment: Build a Django Application for Sending SMS (Powered by TxtLink API)
+## Group Laboratory/Assignment: Build a Django Application for Sending SMS (Powered by IPROG SMS API)
 
 ---
 
@@ -10,7 +10,7 @@
 4. [Key Features & Implemented Enhancements](#4-key-features--implemented-enhancements)
 5. [Technologies & Dependencies](#5-technologies--dependencies)
 6. [Installation & Setup Instructions](#6-installation--setup-instructions)
-7. [Configuring the SMS Provider (TxtLink)](#7-configuring-the-sms-provider-txtlink)
+7. [Configuring the SMS Provider (IPROG SMS)](#7-configuring-the-sms-provider-iprog-sms)
 8. [Running the Application](#8-running-the-application)
 9. [Automated Testing Procedures & Test Results](#9-automated-testing-procedures--test-results)
 10. [Submission vs Delivery Status Handling](#10-submission-vs-delivery-status-handling)
@@ -24,11 +24,11 @@
 
 This web application was engineered for **IT 120 – Integrative Programming and Technologies**. The primary objective is to demonstrate enterprise-grade integration between the **Django** Python web framework and an external SMS Gateway API.
 
-While the original laboratory guide outlined integration using Twilio, this solution implements the high-performance **TxtLink SMS Gateway API** (`textlinksms.com`), providing native phone number formatting (including Philippine mobile networks `09...` and international `+639...` / E.164 formats), secure API key management, real-time message segment calculation, interactive UI handset previews, and persistent transmission auditing.
+While the original laboratory guide outlined integration using Twilio, this solution implements the Philippine-focused **IPROG SMS API** (`iprogsms.com`), providing native phone number formatting (including Philippine mobile networks `09...` and international `+639...` / E.164 formats), secure API key management, real-time message segment calculation, interactive UI handset previews, and persistent transmission auditing.
 
 #### Core Learning Objectives Achieved:
 1. **Django Web Application Development:** Built with clean Model-View-Template (MVT) architecture, CSRF protection, and separation of concerns.
-2. **External SMS Gateway API Integration:** Secure, resilient RESTful HTTP POST communication with TxtLink API with timeout and error handling.
+2. **External SMS Gateway API Integration:** Secure, resilient RESTful HTTP POST communication with the IPROG SMS API with timeout and error handling.
 3. **Rigorous Input Validation:** Real-time and server-side sanitation of phone numbers, character bounds, and message payload integrity.
 4. **Credential Security Practices:** Environment variable isolation via `.env` and `python-dotenv`, preventing credential exposure in Git.
 5. **Quality Assurance & Testing:** Automated test suite verifying edge cases, network failures, credential issues, and validation states.
@@ -41,7 +41,7 @@ While the original laboratory guide outlined integration using Twilio, this solu
 | :--- | :--- | :--- |
 | **Member 1: Architecture & Backend** | Django project structure, settings, database models (`SMSMessage`, `Contact`, `QuickTemplate`), database migrations, URL routing, and view controllers. | **Nesmark Villocino** |
 | **Member 2: Frontend, UX & Validation** | User interface design (Bootstrap 5), interactive live handset preview mockup, form input validation, real-time character & segment counter, toast notifications. | **Nesmark Villocino** |
-| **Member 3: Provider Integration & DevOps** | TxtLink REST API service wrapper (`TxtLinkService`), simulation/sandbox engine, error/exception recovery, security isolation, automated test suite, and Git repository management. | **Nesmark Villocino** |
+| **Member 3: Provider Integration & DevOps** | IPROG SMS REST API service wrapper (`IprogSMSService`), simulation/sandbox engine, error/exception recovery, security isolation, automated test suite, and Git repository management. | **Nesmark Villocino** |
 
 > *Note: For this project submission, all three suggested functional roles were consolidated and fully implemented by Nesmark Villocino.*
 
@@ -56,19 +56,19 @@ While the original laboratory guide outlined integration using Twilio, this solu
  [ Django Form ] ──► (Input Validation: Phone E.164 regex, Non-empty message)
        │
        ▼
- [ TxtLinkService ]
+ [ IprogSMSService ]
        │
        ├──► [ Mode Check ]
        │         │
-       │         ├── If Simulation / No Key ──► (Simulate Gateway Response & Reference ID)
+       │         ├── If Simulation / No Token ──► (Simulate Gateway Response & Reference ID)
        │         │
-       │         └── If Live API Key ────────► (HTTP POST https://textlinksms.com/api/send-sms)
+       │         └── If Live API Token ───────► (HTTP POST https://www.iprogsms.com/api/v1/sms_messages)
        │                                                 │
        │                                                 ▼
-       │                                          [ TxtLink Gateway ]
+       │                                          [ IPROG SMS Gateway ]
        │                                                 │
        │                                                 ▼
-       │                                      [ Cellular Carriers ]
+       │                              [ Globe / TM / DITO carriers ]
        ▼
 [ SQLite Database Log ] ──► Status: SUBMITTED / DELIVERED / FAILED / SIMULATED
        │
@@ -82,7 +82,7 @@ While the original laboratory guide outlined integration using Twilio, this solu
 
 #### A. Core Mandatory Features
 - **SMS Composition Form:** Clean interface with recipient phone number, message body input, and submission button.
-- **TxtLink SMS Gateway Integration:** Direct HTTP Bearer authorization sending payload to `https://textlinksms.com/api/send-sms`.
+- **IPROG SMS Gateway Integration:** Form-encoded HTTP POST sending payload to `https://www.iprogsms.com/api/v1/sms_messages`.
 - **E.164 & Philippine Number Sanitation:** Automatically normalizes `09171234567`, `9171234567`, `639171234567`, and international formats into standard `+639171234567`.
 - **Comprehensive Error Handling:** Gracefully captures missing fields, malformed phone numbers, provider timeouts, DNS failures, and API 4xx/5xx responses without exposing sensitive credentials.
 - **CSRF & Security Isolation:** Django CSRF token enforcement on all forms.
@@ -162,14 +162,18 @@ python manage.py seed_data
 
 ---
 
-### 7. Configuring the SMS Provider (TxtLink)
+### 7. Configuring the SMS Provider (IPROG SMS)
 
-TxtLink (`textlinksms.com`) provides a REST API for programmatic SMS dispatching.
+IPROG SMS (`iprogsms.com`) is a Philippine SMS gateway that delivers through the
+official Globe, TM, and DITO routes using its shared sender name. It is the active
+provider for this project because foreign gateways are commonly blocked by PH carriers.
 
-#### How to Obtain Your TxtLink API Key:
-1. Visit [https://textlinksms.com](https://textlinksms.com) and create or log in to your account.
-2. Navigate to your **Dashboard** -> **API Settings / Access Tokens**.
-3. Copy your **API Key / Bearer Token**.
+#### Free Credits for Students:
+1. Register at [https://www.iprogsms.com/register](https://www.iprogsms.com/register) using Google, GitHub, or Facebook.
+2. Choose **Student** verification and enter your project title, school, course, and team members.
+3. Student verification is reviewed automatically, usually within a few minutes.
+4. Once approved, **5 free SMS credits** are added and a sender header is approved with them.
+5. Open **API Settings**, reveal the token, and copy it.
 
 #### Configuring `.env`:
 Open the `.env` file in the project root:
@@ -179,15 +183,24 @@ DEBUG=True
 SECRET_KEY=your-django-secret-key
 ALLOWED_HOSTS=127.0.0.1,localhost
 
-# TxtLink Provider Credentials
-TXTLINK_API_KEY=YOUR_ACTUAL_TXTLINK_API_KEY_HERE
-TXTLINK_API_URL=https://textlinksms.com/api/send-sms
+# IPROG SMS Provider (Active)
+IPROG_API_TOKEN=paste-your-iprog-api-token-here
+IPROG_API_URL=https://www.iprogsms.com/api/v1/sms_messages
+IPROG_STATUS_URL=https://www.iprogsms.com/api/v1/sms_messages/status
 
-# Simulation Mode Toggle:
-# Set to 'False' to dispatch real live SMS messages through TxtLink.
-# Set to 'True' to run in simulation/demo mode without consuming SMS credits.
-TXTLINK_SIMULATION_MODE=False
+# Simulation Toggle:
+# False -> sends for real through IPROG when the token is set.
+# True  -> runs in simulation/demo mode without sending any real SMS.
+SMS_SIMULATION_MODE=False
 ```
+
+> **No token yet?** Leave `IPROG_API_TOKEN` empty and the app automatically runs in
+> simulation mode, so you can still demo the full workflow without spending credits.
+
+#### Network Coverage Note:
+- The shared sender supports **Globe, TM, DITO, and GOMO**.
+- **Smart and TNT** numbers require an approved custom sender name (request it in the dashboard).
+- Free daily test SMS is also available; it has a 100-character limit and a branded footer.
 
 > **Security Reminder:** Never commit the `.env` file to GitHub or share API tokens in video recordings. The `.gitignore` file is pre-configured to strictly exclude `.env`.
 
@@ -228,18 +241,18 @@ python manage.py test
 | 5 | **Missing / Invalid API Key** | HTTP 401 Unauthorized gateway response | Catches error cleanly without revealing sensitive key string | **PASSED** |
 | 6 | **Provider Network Outage** | ConnectionError / DNS failure simulation | Displays friendly network failure alert | **PASSED** |
 | 7 | **Gateway Timeout** | Requests timeout simulation (>12s) | Displays clear timeout notification to user | **PASSED** |
-| 8 | **Submission vs Delivery Distinction** | Successful HTTP 200 from TxtLink | Correctly sets status to `SUBMITTED` (not claiming false handset delivery) | **PASSED** |
+| 8 | **Submission vs Delivery Distinction** | Successful HTTP 200 from IPROG SMS | Correctly sets status to `SUBMITTED` (not claiming false handset delivery) | **PASSED** |
 | 9 | **Live Character & Segment Counter** | 160-char GSM-7 and Unicode payload | Computes exact segment split (160 vs 153 chars) | **PASSED** |
 | 10 | **Address Book CRUD** | Creating, listing, and deleting contacts | Contact successfully stored, linked, and deleted | **PASSED** |
 
 #### Test Execution Output:
 ```text
-Found 21 test(s).
+Found 33 test(s).
 Creating test database for alias 'default'...
 System check identified no issues (0 silenced).
-.....................
+.................................
 ----------------------------------------------------------------------
-Ran 21 tests in 0.064s
+Ran 33 tests in 0.072s
 
 OK
 Destroying test database for alias 'default'...
@@ -253,16 +266,20 @@ As mandated by Section VI of the project guidelines:
 > *"A successful API request does not necessarily mean the message has been delivered. The application must distinguish between submission and confirmed delivery when reporting status."*
 
 The application rigorously adheres to this:
-1. **Submitted (`SUBMITTED`):** The TxtLink API accepted the REST payload and queued it with upstream cellular providers. The UI explicitly states: *"Message successfully submitted to TxtLink gateway (Status: Submitted). Delivery to handset is subject to cellular carrier availability."*
-2. **Confirmed Delivered (`DELIVERED`):** Reserved strictly for verified delivery webhook receipts.
+1. **Submitted (`SUBMITTED`):** The IPROG SMS API accepted the REST payload and queued it with upstream cellular providers. The UI explicitly states: *"Message successfully submitted to IPROG SMS gateway (Status: Submitted). Delivery to handset is subject to cellular carrier availability."*
+2. **Confirmed Delivered (`DELIVERED`):** Set only when the provider's status endpoint reports `completed` (or a carrier delivery receipt confirms it).
 3. **Failed (`FAILED`):** Logged when the API returns an error code (invalid key, insufficient balance, network timeout).
 4. **Simulated (`SIMULATED`):** Explicitly marked when dispatched under testing/demo mode to avoid misleading users.
+
+The **Check Delivery Status** button on a message's detail page polls IPROG's
+`/api/v1/sms_messages/status` endpoint and promotes a record from `SUBMITTED` to
+`DELIVERED` (or `FAILED`) only when the provider confirms it.
 
 ---
 
 ### 11. Known Limitations & Future Roadmap
 
-1. **Two-Way Inbound SMS (MO):** The current version focuses on outbound (MT) SMS dispatching. Inbound SMS replies can be integrated in future phases via a TxtLink webhook listener endpoint.
+1. **Two-Way Inbound SMS (MO):** The current version focuses on outbound (MT) SMS dispatching. Inbound SMS replies can be integrated in future phases via an IPROG webhook listener endpoint.
 2. **Delivery Receipts (DLR) Webhooks:** Handset delivery confirmations are currently tracked via gateway submission status; asynchronous carrier DLR callbacks can be configured on a public HTTPS server (e.g. using ngrok during local development).
 3. **Bulk SMS Scheduler:** Future updates can integrate Celery and Redis to schedule automated mass SMS dispatches at specified times.
 
@@ -274,7 +291,7 @@ When recording the **3 to 10-minute demonstration video**, follow this structure
 
 1. **Introduction (1 min):**
    - Introduce yourself (Nesmark Villocino).
-   - State the project title: *IT 120 - Django Application for Sending SMS using TxtLink Gateway*.
+   - State the project title: *IT 120 - Django Application for Sending SMS using IPROG SMS API*.
    - Mention the 3 assigned project roles you fulfilled (Architecture/Backend, Frontend/Validation, Gateway Integration/QA).
 2. **User Interface Walkthrough (1-2 mins):**
    - Show the Compose SMS interface, clean layout, and the interactive phone mockup.
@@ -282,19 +299,19 @@ When recording the **3 to 10-minute demonstration video**, follow this structure
    - Demonstrate the Quick Message Templates and Contact Picker.
 3. **SMS Sending Demonstration (1-2 mins):**
    - Enter an authorized recipient test number (e.g., your mobile number).
-   - Click "Send SMS via TxtLink".
+   - Click "Send SMS via IPROG SMS".
    - Show the green success notification banner highlighting the Gateway Reference ID.
 4. **Validation & Error Handling Demonstration (1 min):**
    - Attempt to submit an empty recipient number -> observe the validation message.
    - Attempt to enter invalid characters (e.g., `abc12345`) -> observe format rejection.
    - Attempt to submit a blank message -> observe the required field error.
 5. **Additional Features Demonstration (1-2 mins):**
-   - Open **Message History**: show search filtering and click "Details" to show the raw JSON response payload from TxtLink.
+   - Open **Message History**: show search filtering and click "Details" to show the raw JSON response payload from IPROG SMS.
    - Open **Analytics Dashboard**: show total messages, submission success rate, and recent activity.
    - Open **Address Book**: demonstrate adding a contact and clicking "SMS" to auto-populate the form.
 6. **Code & Security Summary (1 min):**
-   - Show `settings.py` and explain how `TXTLINK_API_KEY` is securely read from `.env` and excluded from `.gitignore`.
-   - Run `python manage.py test` in the terminal to demonstrate all 21 automated tests passing cleanly.
+   - Show `settings.py` and explain how `IPROG_API_TOKEN` is securely read from `.env` and excluded from `.gitignore`.
+   - Run `python manage.py test` in the terminal to demonstrate all 33 automated tests passing cleanly.
    - Conclude the presentation.
 
 ---

@@ -9,7 +9,7 @@ for SMS composition, contact management, and quick templates.
 import re
 from django import forms
 from .models import Contact, SMSMessage, QuickTemplate
-from .services import TxtLinkService
+from .services import TextbeltService
 
 
 class SMSComposeForm(forms.Form):
@@ -64,7 +64,7 @@ class SMSComposeForm(forms.Form):
             raise forms.ValidationError("Recipient phone number cannot be empty.")
 
         # Strip whitespace, dashes, parentheses
-        sanitized = TxtLinkService.sanitize_phone_number(raw_number)
+        sanitized = TextbeltService.sanitize_phone_number(raw_number)
 
         # Basic international E.164 phone regex: + followed by 7 to 15 digits
         e164_pattern = r'^\+[1-9]\d{6,14}$'
@@ -110,7 +110,7 @@ class ContactForm(forms.ModelForm):
         if not raw_number:
             raise forms.ValidationError("Phone number is required.")
 
-        sanitized = TxtLinkService.sanitize_phone_number(raw_number)
+        sanitized = TextbeltService.sanitize_phone_number(raw_number)
         e164_pattern = r'^\+[1-9]\d{6,14}$'
 
         if not re.match(e164_pattern, sanitized):

@@ -2,7 +2,7 @@
 Views for SMS Project
 IT 120 - Integrative Programming and Technologies
 
-Implements request handling, validation workflows, TxtLink gateway interaction,
+Implements request handling, validation workflows, IPROG SMS gateway interaction,
 database logging, feedback alerts, and additional dashboard & contact features.
 """
 
@@ -11,18 +11,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_http_methods
-from django.conf import settings
 from django.db.models import Count, Q
 
 from .models import SMSMessage, Contact, QuickTemplate
 from .forms import SMSComposeForm, ContactForm, QuickTemplateForm
-from .services import TxtLinkService
+from .services import IprogSMSService
 
 
 def compose_sms(request):
     """
     Main View: SMS Composition and Dispatching.
-    Handles the form display, input validation, TxtLink gateway communication,
+    Handles the form display, input validation, IPROG SMS gateway communication,
     and displays appropriate success or error alerts to the user.
     """
     if request.method == 'POST':
@@ -32,11 +31,14 @@ def compose_sms(request):
             message_text = form.cleaned_data['message']
             contact = form.cleaned_data.get('recipient_contact')
 
-            # Calculate characters and segments
-            segment_info = TxtLinkService.calculate_segments(message_text)
+            # Active SMS provider: IPROG SMS
+            service = IprogSMSService
 
-            # Send SMS via TxtLink Service
-            gateway_result = TxtLinkService.send_sms(
+            # Calculate characters and segments
+            segment_info = service.calculate_segments(message_text)
+
+            # Send SMS via the active provider service
+            gateway_result = service.send_sms(
                 phone_number=phone_number,
                 message=message_text
             )
@@ -61,14 +63,14 @@ def compose_sms(request):
                 if gateway_result.get('is_simulation'):
                     messages.info(
                         request,
-                        f"Demonstration Mode: Message submitted to simulated TxtLink gateway. "
+                        f"Demonstration Mode: Message submitted to the simulated SMS gateway. "
                         f"Reference ID: {sms_record.gateway_message_id}. "
-                        f"(Note: Message logged in system. Real SMS requires live API key)."
+                        f"(Note: Message logged in system. Real SMS requires a live API key)."
                     )
                 else:
                     messages.success(
                         request,
-                        f"Message successfully submitted to TxtLink gateway! "
+                        f"Message successfully submitted to the SMS gateway! "
                         f"Gateway Reference ID: {sms_record.gateway_message_id}. "
                         f"Status: Submitted (handset delivery will be fulfilled by carrier)."
                     )
@@ -99,7 +101,7 @@ def compose_sms(request):
         'templates_list': templates_list,
         'recent_messages': recent_messages,
         'contacts_list': contacts_list,
-        'is_simulation_mode': getattr(settings, 'TXTLINK_SIMULATION_MODE', False),
+        'is_simulation_mode': IprogSMSService.is_simulation_active(),
         'active_page': 'compose'
     }
     return render(request, 'sms_app/compose.html', context)
@@ -137,10 +139,56 @@ def history_list(request):
 def message_detail(request, pk):
     """
     Displays full details of a single SMS transmission log,
-    including raw TxtLink gateway response data.
+    including raw IPROG SMS gateway response data.
     """
     msg = get_object_or_404(SMSMessage, pk=pk)
     return render(request, 'sms_app/detail.html', {'message_item': msg, 'active_page': 'history'})
+
+
+@require_POST
+def check_delivery_status(request, pk):
+    """
+    Queries IPROG SMS for the latest delivery status of a live message
+    and updates the stored record (SUBMITTED -> DELIVERED/FAILED, etc.).
+    """
+    msg = get_object_or_404(SMSMessage, pk=pk)
+
+    if msg.is_simulation or not msg.gateway_message_id:
+        messages.warning(
+            request,
+            "Delivery status is only available for live messages that have a gateway reference ID."
+        )
+        return redirect('sms_app:detail', pk=pk)
+
+    result = IprogSMSService.check_status(msg.gateway_message_id)
+
+    # Preserve the original send payload while recording the status lookup result.
+    try:
+        raw = json.loads(msg.gateway_response) if msg.gateway_response else {}
+        if not isinstance(raw, dict):
+            raw = {'original': raw}
+    except (ValueError, TypeError):
+        raw = {'original': msg.gateway_response}
+    raw['delivery_status_lookup'] = result.get('raw_response', {})
+
+    msg.status_detail = result['detail']
+    msg.gateway_response = json.dumps(raw, indent=2)
+    if result.get('status'):
+        msg.status = result['status']
+    msg.error_message = result.get('error')
+    msg.save(update_fields=['status', 'status_detail', 'gateway_response', 'error_message'])
+
+    if result['success']:
+        messages.success(
+            request,
+            f"Delivery status updated: {result.get('provider_status')}."
+        )
+    else:
+        messages.error(
+            request,
+            f"Could not confirm delivery: {result['detail']}"
+        )
+    return redirect('sms_app:detail', pk=pk)
 
 
 def dashboard(request):
@@ -170,7 +218,7 @@ def dashboard(request):
         'total_contacts': total_contacts,
         'success_rate': success_rate,
         'recent_activity': recent_activity,
-        'is_simulation_mode': getattr(settings, 'TXTLINK_SIMULATION_MODE', False),
+        'is_simulation_mode': IprogSMSService.is_simulation_active(),
         'active_page': 'dashboard'
     }
     return render(request, 'sms_app/dashboard.html', context)
@@ -228,5 +276,5 @@ def api_calculate_segments(request):
     AJAX endpoint for real-time character counter and SMS segment calculation.
     """
     text = request.GET.get('text', '')
-    data = TxtLinkService.calculate_segments(text)
+    data = IprogSMSService.calculate_segments(text)
     return JsonResponse(data)
