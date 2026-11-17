@@ -15,7 +15,6 @@
 9. [Automated Testing Procedures & Test Results](#9-automated-testing-procedures--test-results)
 10. [Submission vs Delivery Status Handling](#10-submission-vs-delivery-status-handling)
 11. [Known Limitations & Future Roadmap](#11-known-limitations--future-roadmap)
-12. [Demonstration Video Guide & Recording Checklist](#12-demonstration-video-guide--recording-checklist)
 
 ---
 
@@ -281,34 +280,3 @@ The **Check Delivery Status** button on a message's detail page polls IPROG's
 1. **Two-Way Inbound SMS (MO):** The current version focuses on outbound (MT) SMS dispatching. Inbound SMS replies can be integrated in future phases via an IPROG webhook listener endpoint.
 2. **Delivery Receipts (DLR) Webhooks:** Handset delivery confirmations are currently tracked via gateway submission status; asynchronous carrier DLR callbacks can be configured on a public HTTPS server (e.g. using ngrok during local development).
 3. **Bulk SMS Scheduler:** Future updates can integrate Celery and Redis to schedule automated mass SMS dispatches at specified times.
-
----
-
-### 12. Demonstration Video Guide & Recording Checklist
-
-When recording the **3 to 10-minute demonstration video**, follow this structured walkthrough:
-
-1. **Introduction (1 min):**
-   - Introduce yourself (Nesmark Villocino).
-   - State the project title: *IT 120 - Django Application for Sending SMS using IPROG SMS API*.
-   - Mention the 3 assigned project roles you fulfilled (Architecture/Backend, Frontend/Validation, Gateway Integration/QA).
-2. **User Interface Walkthrough (1-2 mins):**
-   - Show the Compose SMS interface, clean layout, and the interactive phone mockup.
-   - Type a phone number and message to show the real-time character counter and live screen preview updating.
-   - Demonstrate the Quick Message Templates and Contact Picker.
-3. **SMS Sending Demonstration (1-2 mins):**
-   - Enter an authorized recipient test number (e.g., your mobile number).
-   - Click "Send SMS via IPROG SMS".
-   - Show the green success notification banner highlighting the Gateway Reference ID.
-4. **Validation & Error Handling Demonstration (1 min):**
-   - Attempt to submit an empty recipient number -> observe the validation message.
-   - Attempt to enter invalid characters (e.g., `abc12345`) -> observe format rejection.
-   - Attempt to submit a blank message -> observe the required field error.
-5. **Additional Features Demonstration (1-2 mins):**
-   - Open **Message History**: show search filtering and click "Details" to show the raw JSON response payload from IPROG SMS.
-   - Open **Analytics Dashboard**: show total messages, submission success rate, and recent activity.
-   - Open **Address Book**: demonstrate adding a contact and clicking "SMS" to auto-populate the form.
-6. **Code & Security Summary (1 min):**
-   - Show `settings.py` and explain how `IPROG_API_TOKEN` is securely read from `.env` and excluded from `.gitignore`.
-   - Run `python manage.py test` in the terminal to demonstrate all 33 automated tests passing cleanly.
-   - Conclude the presentation.
